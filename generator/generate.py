@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 
 # 画像サイズ（SNS投稿に適した16:9）
 WIDTH = 1200
@@ -79,11 +79,55 @@ def draw_effect_color(draw: ImageDraw.ImageDraw, text: str, color: str) -> None:
     draw.text((x, y), text, fill=EFFECT_TEXT_COLOR.get(color, color), font=font)
 
 
-# 演出名 → 描画関数のマッピング
-EFFECT_HANDLERS = {
-    "large": draw_effect_large,
-    "small": draw_effect_small,
-}
+def draw_effect_half(img: Image.Image, draw: ImageDraw.ImageDraw, text: str) -> None:
+    """文字の左半分だけ見える（右半分を白で隠す）"""
+    font = load_font(EFFECT_FONT_SIZE["normal"])
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    x = (WIDTH - text_w) / 2
+    y = (HEIGHT - text_h) / 2 - bbox[1]
+    draw.text((x, y), text, fill="#1a1a1a", font=font)
+    # 右半分を白で覆う
+    mid_x = WIDTH // 2
+    draw.rectangle([(mid_x, 0), (WIDTH, HEIGHT)], fill="white")
+
+
+def draw_effect_top(draw: ImageDraw.ImageDraw, text: str) -> None:
+    """文字を画面上部に配置"""
+    font = load_font(EFFECT_FONT_SIZE["normal"])
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    x = (WIDTH - text_w) / 2
+    y = 30 - bbox[1]
+    draw.text((x, y), text, fill="#1a1a1a", font=font)
+
+
+def draw_effect_bottom(draw: ImageDraw.ImageDraw, text: str) -> None:
+    """文字を画面下部に配置"""
+    font = load_font(EFFECT_FONT_SIZE["normal"])
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    x = (WIDTH - text_w) / 2
+    y = HEIGHT - text_h - 30 - bbox[1]
+    draw.text((x, y), text, fill="#1a1a1a", font=font)
+
+
+def draw_effect_flip(img: Image.Image, draw: ImageDraw.ImageDraw, text: str) -> None:
+    """文字を上下逆さに描画"""
+    font = load_font(EFFECT_FONT_SIZE["normal"])
+    # 一時画像にテキストを描画してから上下反転して合成
+    txt_img = Image.new("RGBA", (WIDTH, HEIGHT), (255, 255, 255, 0))
+    txt_draw = ImageDraw.Draw(txt_img)
+    bbox = txt_draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    x = (WIDTH - text_w) / 2
+    y = (HEIGHT - text_h) / 2 - bbox[1]
+    txt_draw.text((x, y), text, fill="#1a1a1a", font=font)
+    txt_img = txt_img.transpose(Image.FLIP_TOP_BOTTOM)
+    img.paste(txt_img, (0, 0), txt_img)
 
 
 def generate_puzzle_image(puzzle: dict, output_dir: Path) -> Path:
@@ -94,12 +138,25 @@ def generate_puzzle_image(puzzle: dict, output_dir: Path) -> Path:
     effect = puzzle["effect"]
     text = puzzle["content"]
 
+    # 色系の演出
     if effect in ("red", "blue"):
         draw_effect_color(draw, text, effect)
-    elif effect in EFFECT_HANDLERS:
-        EFFECT_HANDLERS[effect](draw, text)
+    # サイズ系の演出
+    elif effect == "large":
+        draw_effect_large(draw, text)
+    elif effect == "small":
+        draw_effect_small(draw, text)
+    # 配置系の演出
+    elif effect == "top":
+        draw_effect_top(draw, text)
+    elif effect == "bottom":
+        draw_effect_bottom(draw, text)
+    # 変形系の演出（imgも渡す）
+    elif effect == "half":
+        draw_effect_half(img, draw, text)
+    elif effect == "flip":
+        draw_effect_flip(img, draw, text)
     else:
-        # フォールバック: 通常サイズで描画
         draw_effect_color(draw, text, "normal")
 
     # 枠線（スライド風）

@@ -20,5 +20,115 @@
     "answer": "消火器",
     "hint": "火事のときに使います",
     "difficulty": 2
+  },
+  {
+    "id": "003",
+    "content": "九",
+    "content_type": "text",
+    "effect": "large",
+    "effect_params": {},
+    "reading": "だいく",
+    "answer": "大工",
+    "hint": "家を建てる人です",
+    "difficulty": 1
+  },
+  {
+    "id": "004",
+    "content": "節",
+    "content_type": "text",
+    "effect": "small",
+    "effect_params": {},
+    "reading": "しょうせつ",
+    "answer": "小説",
+    "hint": "本屋に並んでいます",
+    "difficulty": 2
+  },
+  {
+    "id": "005",
+    "content": "法",
+    "content_type": "text",
+    "effect": "large",
+    "effect_params": {},
+    "reading": "たいほう",
+    "answer": "大砲",
+    "hint": "戦争で使う武器です",
+    "difficulty": 2
+  },
+  {
+    "id": "006",
+    "content": "晩",
+    "content_type": "text",
+    "effect": "small",
+    "effect_params": {},
+    "reading": "こばん",
+    "answer": "小判",
+    "hint": "江戸時代のお金です",
+    "difficulty": 2
+  },
+  {
+    "id": "007",
+    "content": "紺",
+    "content_type": "text",
+    "effect": "large",
+    "effect_params": {},
+    "reading": "だいこん",
+    "answer": "大根",
+    "hint": "おでんの具です",
+    "difficulty": 1
+  },
+  {
+    "id": "008",
+    "content": "ちゃん",
+    "content_type": "text",
+    "effect": "red",
+    "effect_params": {},
+    "reading": "あかちゃん",
+    "answer": "赤ちゃん",
+    "hint": "生まれたばかりです",
+    "difficulty": 1
+  },
+  {
+    "id": "009",
+    "content": "月",
+    "content_type": "text",
+    "effect": "half",
+    "effect_params": {},
+    "reading": "はんつき",
+    "answer": "半月",
+    "hint": "夜空に浮かんでいます",
+    "difficulty": 2
+  },
+  {
+    "id": "010",
+    "content": "人",
+    "content_type": "text",
+    "effect": "top",
+    "effect_params": {},
+    "reading": "うえにん",
+    "answer": "上人",
+    "hint": "偉いお坊さんです",
+    "difficulty": 3
+  },
+  {
+    "id": "011",
+    "content": "空",
+    "content_type": "text",
+    "effect": "blue",
+    "effect_params": {},
+    "reading": "あおぞら",
+    "answer": "青空",
+    "hint": "晴れた日に見えます",
+    "difficulty": 1
+  },
+  {
+    "id": "012",
+    "content": "転",
+    "content_type": "text",
+    "effect": "flip",
+    "effect_params": {},
+    "reading": "さかさてん",
+    "answer": "逆転",
+    "hint": "形勢が変わることです",
+    "difficulty": 2
   }
 ]
