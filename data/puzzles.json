@@ -1,0 +1,24 @@
+[
+  {
+    "id": "001",
+    "content": "豆",
+    "content_type": "text",
+    "effect": "large",
+    "effect_params": {},
+    "reading": "だいず",
+    "answer": "大豆",
+    "hint": "食べ物です",
+    "difficulty": 1
+  },
+  {
+    "id": "002",
+    "content": "柿",
+    "content_type": "text",
+    "effect": "small",
+    "effect_params": {},
+    "reading": "しょうかき",
+    "answer": "消火器",
+    "hint": "火事のときに使います",
+    "difficulty": 2
+  }
+]
