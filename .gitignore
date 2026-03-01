@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 生成画像（Git管理しない）
+output/
+
+# OS
+.DS_Store
+
+# 環境
+.env
