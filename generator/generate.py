@@ -110,6 +110,63 @@ def generate_puzzle_image(puzzle: dict, output_dir: Path) -> Path:
     return output_path
 
 
+def generate_viewer_html(puzzles: list[dict], output_dir: Path) -> Path:
+    """問題一覧を表示するHTMLビューアを生成する"""
+    cards = ""
+    for p in puzzles:
+        cards += f"""
+      <div class="card">
+        <div class="image-wrap">
+          <img src="{p['id']}.png" alt="問題 {p['id']}">
+        </div>
+        <div class="meta">
+          <span class="badge">#{p['id']}</span>
+          <span class="badge diff-{p['difficulty']}">難易度 {p['difficulty']}</span>
+        </div>
+        <details>
+          <summary>答えを見る</summary>
+          <p class="answer">{p['answer']}（{p['reading']}）</p>
+          <p class="hint">ヒント: {p['hint']}</p>
+        </details>
+      </div>"""
+
+    html = f"""<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判じ絵なぞなぞ</title>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{ font-family: -apple-system, sans-serif; background: #f5f5f5; padding: 2rem; }}
+  h1 {{ text-align: center; margin-bottom: 2rem; font-size: 1.8rem; }}
+  .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }}
+  .card {{ background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }}
+  .image-wrap {{ padding: 1rem; background: #fafafa; }}
+  .image-wrap img {{ width: 100%; height: auto; display: block; border-radius: 4px; }}
+  .meta {{ padding: 0.75rem 1rem 0; display: flex; gap: 0.5rem; }}
+  .badge {{ font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: #e8e8e8; color: #555; }}
+  .diff-1 {{ background: #d4edda; color: #155724; }}
+  .diff-2 {{ background: #fff3cd; color: #856404; }}
+  .diff-3 {{ background: #f8d7da; color: #721c24; }}
+  details {{ padding: 0.75rem 1rem 1rem; }}
+  summary {{ cursor: pointer; color: #666; font-size: 0.9rem; }}
+  .answer {{ font-size: 1.3rem; font-weight: bold; margin-top: 0.5rem; }}
+  .hint {{ font-size: 0.85rem; color: #888; margin-top: 0.3rem; }}
+</style>
+</head>
+<body>
+<h1>判じ絵なぞなぞ</h1>
+<div class="grid">{cards}
+</div>
+</body>
+</html>"""
+
+    html_path = output_dir / "index.html"
+    html_path.write_text(html, encoding="utf-8")
+    return html_path
+
+
 def main():
     data_path = Path(__file__).parent.parent / "data" / "puzzles.json"
     output_dir = Path(__file__).parent.parent / "output"
@@ -121,11 +178,18 @@ def main():
     with open(data_path, encoding="utf-8") as f:
         puzzles = json.load(f)
 
+    generated = []
     for puzzle in puzzles:
         if target_id and puzzle["id"] != target_id:
             continue
         path = generate_puzzle_image(puzzle, output_dir)
+        generated.append(puzzle)
         print(f"生成完了: {path} (答え: {puzzle['answer']})")
+
+    # HTMLビューア生成（全問題生成時のみ）
+    if not target_id:
+        html_path = generate_viewer_html(puzzles, output_dir)
+        print(f"\nビューア: file://{html_path}")
 
 
 if __name__ == "__main__":
