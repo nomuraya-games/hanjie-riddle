@@ -11,3 +11,9 @@ output/
 
 # 環境
 .env
+
+# holdoutデータ（テスト保留用・再生成可能）
+data/*_holdout.json
+
+# エントリポイントstub（内容なし）
+main.py
