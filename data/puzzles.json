@@ -93,21 +93,21 @@
     "content_type": "text",
     "effect": "half",
     "effect_params": {},
-    "reading": "はんつき",
+    "reading": "はんげつ",
     "answer": "半月",
     "hint": "夜空に浮かんでいます",
     "difficulty": 2
   },
   {
     "id": "010",
-    "content": "人",
+    "content": "司",
     "content_type": "text",
     "effect": "top",
     "effect_params": {},
-    "reading": "うえにん",
-    "answer": "上人",
-    "hint": "偉いお坊さんです",
-    "difficulty": 3
+    "reading": "じょうし",
+    "answer": "上司",
+    "hint": "会社で自分より役職が上の人です",
+    "difficulty": 2
   },
   {
     "id": "011",
@@ -126,7 +126,7 @@
     "content_type": "text",
     "effect": "flip",
     "effect_params": {},
-    "reading": "さかさてん",
+    "reading": "ぎゃくてん",
     "answer": "逆転",
     "hint": "形勢が変わることです",
     "difficulty": 2

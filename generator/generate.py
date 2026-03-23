@@ -13,17 +13,24 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, ImageChops
+from PIL import Image, ImageDraw, ImageFont
 
 # 画像サイズ（SNS投稿に適した16:9）
 WIDTH = 1200
 HEIGHT = 675
 
-# フォント（macOS ヒラギノ角ゴシック W6）
-FONT_PATH = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
+# フォント候補（環境変数 HANJIE_FONT_PATH が最優先）
+FONT_CANDIDATES = [
+    "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
+    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJKjp-Regular.otf",
+]
 
 # 演出ごとのフォントサイズ
 EFFECT_FONT_SIZE = {
@@ -41,9 +48,118 @@ EFFECT_TEXT_COLOR = {
     "normal": "#1a1a1a",
 }
 
+REQUIRED_FIELDS = {
+    "id",
+    "content",
+    "content_type",
+    "effect",
+    "effect_params",
+    "reading",
+    "answer",
+    "hint",
+    "difficulty",
+}
+ALLOWED_EFFECTS = set(EFFECT_FONT_SIZE) | {"red", "blue", "half", "top", "bottom", "flip"}
+ALLOWED_CONTENT_TYPES = {"text"}
+STRICT_READING_PREFIXES = {
+    "blue": ("あお",),
+    "bottom": ("した",),
+}
+STRICT_ANSWER_PREFIXES = {
+    "blue": ("青",),
+    "bottom": ("下",),
+}
+_RESOLVED_FONT_PATH: str | None = None
+
+
+def resolve_font_path() -> str:
+    global _RESOLVED_FONT_PATH
+    if _RESOLVED_FONT_PATH:
+        return _RESOLVED_FONT_PATH
+
+    env_font = os.getenv("HANJIE_FONT_PATH")
+    if env_font and Path(env_font).exists():
+        _RESOLVED_FONT_PATH = env_font
+        return _RESOLVED_FONT_PATH
+
+    for candidate in FONT_CANDIDATES:
+        if Path(candidate).exists():
+            _RESOLVED_FONT_PATH = candidate
+            return _RESOLVED_FONT_PATH
+
+    raise FileNotFoundError(
+        "日本語フォントが見つかりません。"
+        "HANJIE_FONT_PATH にフォントファイルを指定してください。"
+    )
+
 
 def load_font(size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(FONT_PATH, size)
+    return ImageFont.truetype(resolve_font_path(), size)
+
+
+def validate_puzzles(puzzles: list[dict]) -> None:
+    """問題データの最低限の整合性を検証する。"""
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+
+    for index, puzzle in enumerate(puzzles, start=1):
+        if not isinstance(puzzle, dict):
+            errors.append(f"{index}件目: dictではありません")
+            continue
+
+        puzzle_id = str(puzzle.get("id", f"index-{index}"))
+        missing = sorted(REQUIRED_FIELDS - set(puzzle))
+        if missing:
+            errors.append(f"{puzzle_id}: 必須フィールド不足 {', '.join(missing)}")
+
+        if puzzle_id in seen_ids:
+            errors.append(f"{puzzle_id}: id が重複しています")
+        seen_ids.add(puzzle_id)
+
+        effect = puzzle.get("effect")
+        if effect not in ALLOWED_EFFECTS:
+            errors.append(f"{puzzle_id}: 未対応 effect '{effect}'")
+
+        content_type = puzzle.get("content_type")
+        if content_type not in ALLOWED_CONTENT_TYPES:
+            errors.append(f"{puzzle_id}: 未対応 content_type '{content_type}'")
+
+        effect_params = puzzle.get("effect_params")
+        if not isinstance(effect_params, dict):
+            errors.append(f"{puzzle_id}: effect_params は object が必要です")
+
+        difficulty = puzzle.get("difficulty")
+        if not isinstance(difficulty, int) or not 1 <= difficulty <= 3:
+            errors.append(f"{puzzle_id}: difficulty は 1-3 の整数が必要です")
+
+        for key in ("content", "reading", "answer", "hint"):
+            value = puzzle.get(key)
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{puzzle_id}: {key} は空でない文字列が必要です")
+
+        reading = puzzle.get("reading")
+        if isinstance(reading, str):
+            required_reading_prefixes = STRICT_READING_PREFIXES.get(effect)
+            if required_reading_prefixes and not reading.startswith(required_reading_prefixes):
+                joined = " / ".join(required_reading_prefixes)
+                errors.append(
+                    f"{puzzle_id}: effect '{effect}' は reading が '{joined}' 始まりである必要があります "
+                    f"(現在: '{reading}')"
+                )
+
+        answer = puzzle.get("answer")
+        if isinstance(answer, str):
+            required_answer_prefixes = STRICT_ANSWER_PREFIXES.get(effect)
+            if required_answer_prefixes and not answer.startswith(required_answer_prefixes):
+                joined = " / ".join(required_answer_prefixes)
+                errors.append(
+                    f"{puzzle_id}: effect '{effect}' は answer が '{joined}' 始まりである必要があります "
+                    f"(現在: '{answer}')"
+                )
+
+    if errors:
+        lines = "\n".join(f"- {error}" for error in errors)
+        raise ValueError(f"問題データ検証エラー:\n{lines}")
 
 
 def draw_effect_large(draw: ImageDraw.ImageDraw, text: str) -> None:
@@ -233,7 +349,11 @@ def main():
     target_id = sys.argv[1] if len(sys.argv) > 1 else None
 
     with open(data_path, encoding="utf-8") as f:
-        puzzles = json.load(f)
+        puzzles = sorted(json.load(f), key=lambda x: x["id"])
+
+    validate_puzzles(puzzles)
+    font_path = resolve_font_path()
+    print(f"使用フォント: {font_path}", flush=True)
 
     generated = []
     for puzzle in puzzles:
@@ -247,6 +367,9 @@ def main():
     if not target_id:
         html_path = generate_viewer_html(puzzles, output_dir)
         print(f"\nビューア: file://{html_path}")
+    elif not generated:
+        print(f"指定IDの問題が見つかりません: {target_id}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

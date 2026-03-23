@@ -16,7 +16,7 @@
 ## 仕組み
 
 - 問題データ（JSON）から画像を自動生成
-- SVG / Pillow で出力（PNG）
+- Pillow でPNGを出力
 - SNS（X等）で出題、ブログ（はてな/note）で解説
 
 ## 構成
@@ -25,6 +25,29 @@
 hanjie-riddle/
 ├── data/          # 問題データ（JSON）
 ├── generator/     # 画像生成スクリプト
-├── output/        # 生成画像
-└── templates/     # 投稿テンプレート
+└── output/        # 生成画像・HTMLビューア
 ```
+
+## 実行
+
+```bash
+uv run python generator/generate.py
+```
+
+特定IDのみ生成する場合:
+
+```bash
+uv run python generator/generate.py 010
+```
+
+フォントを明示したい場合:
+
+```bash
+HANJIE_FONT_PATH=/path/to/font.ttf uv run python generator/generate.py
+```
+
+## 品質ルール（厳格）
+
+- `effect=blue` の問題は `reading` が `あお` 始まり、`answer` が `青` 始まりであること
+- `effect=bottom` の問題は `reading` が `した` 始まり、`answer` が `下` 始まりであること
+- ルール違反の問題データがある場合、生成時にエラーで停止
